@@ -1,0 +1,48 @@
+<!doctype html>
+
+<html th:with="lang=${#locale.language}" th:lang="${lang}"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
+<head>
+    <title>URL Shortener</title>
+</head>
+
+<body>
+<div class="wrapper" layout:fragment="content">
+    <div class="section">
+        <div class="container justify-content-start">
+
+            <div class="row justify-content-start">
+               <h2 class="section-title">URL Shortener</h2>
+            </div>
+
+            <div class="row justify-content-start">
+                <form method="post" th:object="${urlShortenRequest}">
+                    <div class="form-group">
+                        <label for="requestUrl">Input your URL</label>
+                        <input th:value="*{longUrl}" required type="text" class="form-control input-large" id="requestUrl" name="longUrl" placeholder="url">
+                        <div class="alert alert-warning" th:if="${#fields.hasErrors('longUrl')}" th:errors="*{longUrl}"></div>
+                        <small id="emailHelp" class="form-text text-muted">Your input URL will be transformed in a shorter one</small>
+                    </div>
+                    <button type="submit" class="btn btn-success">Shorten</button>
+                </form>
+            </div>
+
+            <div class="row justify-content-start">
+                <h2 class="section-title">All shortened URLs</h2>
+                <ul class="list-group">
+                    <li class="list-group-item" th:each="item:${allEncodedUrls}">
+                       <a href="[(${item.shortenedUrl})]" class="link-primary" th:href="@{${item.shortenedUrl}}">[(${item.shortenedUrl})]</a>
+                    </li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+</div>
+</body>
+
+</html>
