@@ -7,55 +7,49 @@ import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
 import javax.validation.constraints.Size
 
-@Entity(name = "URL_ENTRIES")
+@Table(name = "URL_ENTRIES" )
+@Entity
 class UrlEntry {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id")
-    private var id: Long? = null
+    var id: Long? = null
 
     @Column(name = "long_url")
     @Size(max = 2048)
     @NotBlank
-    private var longUrl: String? = null
+    var longUrl: String? = ""
+
+    @OneToOne(cascade = [CascadeType.ALL])
+    @JoinColumn(name = "sequence", referencedColumnName = "sequence")
+    var encodedSequence: EncodedSequence? = null
 
     @Column(name = "created_at")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @NotNull
-    private var createdAt: LocalDateTime? = null
+    var createdAt: LocalDateTime? = null
 
     @Column(name = "expires_at")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @NotNull
-    private var expiresAt: LocalDateTime? = null
+    var expiresAt: LocalDateTime? = null
 
-    fun getId(): Long? {
-        return id
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as UrlEntry
+
+        if (id != other.id) return false
+        if (encodedSequence != other.encodedSequence) return false
+
+        return true
     }
 
-    fun getLongUrl(): String? {
-        return longUrl
+    override fun hashCode(): Int {
+        var result = id?.hashCode() ?: 0
+        result = 31 * result + (encodedSequence?.hashCode() ?: 0)
+        return result
     }
-
-    fun setLongUrl(newLongUrl: String?) {
-        longUrl = newLongUrl
-    }
-
-    fun getCreatedAt(): LocalDateTime? {
-        return createdAt
-    }
-
-    fun setCreatedAt(newCreatedAt: LocalDateTime?) {
-        createdAt = newCreatedAt
-    }
-
-    fun getExpiresAt(): LocalDateTime? {
-        return expiresAt
-    }
-
-    fun setExpiresAt(newExpiresAt: LocalDateTime?) {
-        expiresAt = newExpiresAt
-    }
-
 }
