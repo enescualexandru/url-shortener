@@ -1,3 +1,3 @@
 package com.shortener.dto
 
-class UrlShortenResponse(var shortenedUrl: String)
+class UrlShortenResponse(val shortenedUrl: String)

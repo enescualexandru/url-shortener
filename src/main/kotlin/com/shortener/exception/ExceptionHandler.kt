@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletRequest
 class ExceptionHandler : ResponseEntityExceptionHandler() {
 
     @ExceptionHandler(Exception::class, InvalidInputUrl::class)
-    fun handleError(req: HttpServletRequest, ex: Exception): ModelAndView? {
+    fun handleError(req: HttpServletRequest, ex: Exception): ModelAndView {
         val mav = ModelAndView()
         mav.addObject("exception", ex)
         mav.addObject("url", req.requestURL)

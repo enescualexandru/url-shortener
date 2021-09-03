@@ -14,33 +14,35 @@ import java.net.URI
 
 @Controller
 class UrlController(private val urlService: UrlService) {
+    val encodePageName =  "encode-url"
+    val encodePageResultName = "encode-url-result"
 
     @GetMapping
     fun getEncodeUrlPage(model: Model): String {
-        model.addAttribute("urlShortenRequest", UrlShortenRequest())
+        model.addAttribute("urlShortenRequest", UrlShortenRequest(""))
 
         //TODO: remove it (displays the shortened url history)
         model["allEncodedUrls"] = urlService.getAllShortenedUrls()
 
-        return "encode-url"
+        return encodePageName
     }
 
     @PostMapping
     fun encodeUrl(urlShortenRequest: UrlShortenRequest, bindingResult: BindingResult, model: Model): String {
         if (bindingResult.hasErrors()) {
-            return "encode-url"
+            return encodePageName
         }
         model["urlShortenResponse"] = urlService.shortenUrl(urlShortenRequest)
 
         //TODO: remove it (displays the shortened url history)
         model["allEncodedUrls"] = urlService.getAllShortenedUrls()
 
-        return "encode-url-result"
+        return encodePageResultName
     }
 
     @GetMapping("/e/{encodedSequence}")
-    fun decodeUrl(@PathVariable encodedSequence: String): ResponseEntity<Void?>? {
-        val decodedUrl = urlService.decodeUrl(encodedSequence)
+    fun decodeSequence(@PathVariable encodedSequence: String): ResponseEntity<Void?>? {
+        val decodedUrl = urlService.decodeSequence(encodedSequence)
         return ResponseEntity.status(HttpStatus.FOUND)
             .location(URI.create(decodedUrl))
             .build()
