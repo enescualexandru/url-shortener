@@ -17,6 +17,10 @@ services:
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+      - SPRING_REDIS_PASSWORD=redis
+      - SPRING_REDIS_TIMEOUT=60000
           
   db:
     image: 'postgres:13.4-alpine'
@@ -30,5 +34,19 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=url-shortener
 
+  redis:
+    image: "redis:alpine"
+    container_name: redis
+    command: redis-server --requirepass redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/var/lib/redis
+      - redis-conf:/usr/local/etc/redis/redis.conf
+    environment:
+      - REDIS_REPLICATION_MODE=master
+
 volumes:
   postgres-data:
+  redis-data:
+  redis-conf:

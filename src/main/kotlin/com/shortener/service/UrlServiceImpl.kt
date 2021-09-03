@@ -1,6 +1,7 @@
 package com.shortener.service
 
 import com.shortener.domain.EncodedSequence
+import com.shortener.cache.GenericCachedRepository
 import com.shortener.domain.UrlEntry
 import com.shortener.domain.UrlEntryRepository
 import com.shortener.dto.UrlShortenRequest
@@ -24,7 +25,8 @@ private val baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build
 class UrlServiceImpl(
     private val urlEntryRepository: UrlEntryRepository,
     private val idEncoder: IdEncoder,
-    private val urlValidator: UrlValidator
+    private val urlValidator: UrlValidator,
+    private val cachedUrlEntryRepository: GenericCachedRepository<UrlEntry, Long>
 ) : UrlService {
 
     @Transactional(rollbackFor = [Exception::class])
@@ -44,14 +46,24 @@ class UrlServiceImpl(
         persistedUrlEntry.encodedSequence = EncodedSequence().apply { sequence = encodedId }
         urlEntryRepository.save(urlEntry)
 
-        val url = addBaseUrlToEncodedSequence(encodedId)
+        val persistedUrlEntryId = cachedUrlEntryRepository.save(urlEntry).getId()
+        val encodedUrlEntryId = idEncoder.encode(persistedUrlEntryId!!)
+        val url = addBaseUrlToEncodedSequence(encodedUrlEntryId)
         return UrlShortenResponse(url)
     }
 
-    override fun decodeSequence(encodedSequence: String): String {
-        val urlEntry = urlEntryRepository.findByEncodedSequence(EncodedSequence().apply { sequence = encodedSequence }) ?: throwInvalidInputUrl()
+    override fun decodeUrl(encodedSequence: String): String {
+        val decodedEntriesId = idEncoder.decode(encodedSequence)
+        if (decodedEntriesId.isEmpty()) {
+            throwInvalidInputUrl()
+        }
+        val urlEntryOpt: Optional<UrlEntry> = cachedUrlEntryRepository.findById(decodedEntriesId[0])
+        if (urlEntryOpt.isEmpty) {
+            throwInvalidInputUrl()
+        }
 
-        if (isUrlEntryExpired(urlEntry)) {
+        val urlEntry:UrlEntry = urlEntryOpt.get()
+        if (!isShortenedUrlValid(urlEntry)) {
             throwInvalidInputUrl()
         }
 
