@@ -9,6 +9,7 @@ import com.shortener.exception.InvalidInputUrl
 import com.shortener.utils.IdEncoder
 import com.shortener.utils.UrlValidator
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import java.time.LocalDateTime
 import java.util.*
@@ -26,6 +27,7 @@ class UrlServiceImpl(
     private val urlValidator: UrlValidator
 ) : UrlService {
 
+    @Transactional(rollbackFor = [Exception::class])
     override fun shortenUrl(request: UrlShortenRequest): UrlShortenResponse {
         val fixedRequestUrl = addDefaultSchemaIfMissing(request.longUrl)
 
@@ -53,7 +55,7 @@ class UrlServiceImpl(
             throwInvalidInputUrl()
         }
 
-        return urlEntry.longUrl.toString()
+        return urlEntry.longUrl
     }
 
     override fun getAllShortenedUrls(): List<UrlShortenResponse> = urlEntryRepository.findAllByOrderByIdDesc().map {
