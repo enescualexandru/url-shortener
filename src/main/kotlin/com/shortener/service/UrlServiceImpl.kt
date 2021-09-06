@@ -24,8 +24,7 @@ class UrlServiceImpl(
     private val urlEntryRepository: UrlEntryRepository,
     private val idEncoder: IdEncoder,
     private val urlValidator: UrlValidator
-) :
-    UrlService {
+) : UrlService {
 
     override fun shortenUrl(request: UrlShortenRequest): UrlShortenResponse {
         val fixedRequestUrl = addDefaultSchemaIfMissing(request.longUrl)
@@ -58,16 +57,10 @@ class UrlServiceImpl(
         return urlEntry.longUrl.toString()
     }
 
-    override fun getAllShortenedUrls(): List<UrlShortenResponse> {
-        val allUrls = urlEntryRepository.findAllByOrderByIdDesc()
-        val allShortenedUrls = arrayListOf<UrlShortenResponse>()
-        for (u in allUrls) {
-            val encodedId = idEncoder.encode(u.id!!)
-            val shortenedUrl = addBaseUrlToEncodedSequence(encodedId)
-            allShortenedUrls.add(UrlShortenResponse(shortenedUrl))
-        }
-
-        return allShortenedUrls
+    override fun getAllShortenedUrls(): List<UrlShortenResponse> = urlEntryRepository.findAllByOrderByIdDesc().map {
+        val encodedId = idEncoder.encode(it.id!!)
+        val shortenedUrl = addBaseUrlToEncodedSequence(encodedId)
+        UrlShortenResponse(shortenedUrl)
     }
 
     private fun getNoUserUrlExpiresDays(): Long = URL_EXPIRES_DAYS_NO_USER
