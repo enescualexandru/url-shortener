@@ -33,10 +33,9 @@ class UrlServiceImpl(
             throw InvalidInputUrl("The URL you provided is invalid")
         }
 
-        val urlEntry = UrlEntry()
-        urlEntry.longUrl = fixedRequestUrl
-        urlEntry.createdAt = LocalDateTime.now()
-        urlEntry.expiresAt = urlEntry.createdAt?.plusHours(getNoUserUrlExpiresDays())
+        val urlEntry = UrlEntry(fixedRequestUrl).apply {
+            expiresAt = createdAt.plusHours(getNoUserUrlExpiresDays())
+        }
 
         val persistedUrlEntry = urlEntryRepository.save(urlEntry)
         val encodedId = idEncoder.encode(persistedUrlEntry.id!!)
