@@ -9,7 +9,7 @@ import javax.validation.constraints.Size
 @Table(name = "URL_ENTRIES")
 @Entity
 class UrlEntry(
-    @Column(name = "long_url")
+    @Column(name = "long_url", length = 2048)
     @Size(max = 2048)
     var longUrl: String,
 ) {
