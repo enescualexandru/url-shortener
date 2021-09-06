@@ -110,14 +110,11 @@ class UrlServiceTest(
         assertThat(actualMessage).contains(expectedMessage)
     }
 
-    private fun createUrlEntry(longUrl: String, encodedSequence: String, expired: Boolean): UrlEntry {
-        val entry = UrlEntry()
-        entry.longUrl = longUrl
-        entry.encodedSequence = EncodedSequence().apply { sequence = encodedSequence }
-        entry.createdAt = LocalDateTime.now().minusDays(3)
-        entry.expiresAt = (if (expired) LocalDateTime.now().minusDays(1) else LocalDateTime.now().plusDays(4))
-
-        return entry
-    }
+    private fun createUrlEntry(longUrl: String, encodedSequenceStr: String, expired: Boolean): UrlEntry =
+        UrlEntry(longUrl).apply {
+            encodedSequence = EncodedSequence().apply { sequence = encodedSequenceStr }
+            createdAt = LocalDateTime.now().minusDays(3)
+            expiresAt = (if (expired) LocalDateTime.now().minusDays(1) else LocalDateTime.now().plusDays(4))
+        }
 
 }
