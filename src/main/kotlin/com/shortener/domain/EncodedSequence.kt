@@ -15,7 +15,7 @@ class EncodedSequence : Serializable {
     var id: Long? = null
 
     @NaturalId
-    @Column(name = "sequence", unique = true)
+    @Column(name = "sequence", length = 15, unique = true)
     @Size(max = 15)
     var sequence: String = ""
 
