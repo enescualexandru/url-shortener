@@ -7,5 +7,5 @@ import java.util.*
 @Repository
 interface UrlEntryRepository : JpaRepository<UrlEntry, Long> {
     fun findAllByOrderByIdDesc(): List<UrlEntry>
-    fun findByEncodedSequence(encodedSequence: EncodedSequence): Optional<UrlEntry>
+    fun findByEncodedSequence(encodedSequence: EncodedSequence): UrlEntry?
 }

@@ -49,13 +49,8 @@ class UrlServiceImpl(
     }
 
     override fun decodeSequence(encodedSequence: String): String {
-        val urlEntryOpt =
-            urlEntryRepository.findByEncodedSequence(EncodedSequence().apply { sequence = encodedSequence })
-        if (urlEntryOpt.isEmpty) {
-            throwInvalidInputUrl()
-        }
+        val urlEntry = urlEntryRepository.findByEncodedSequence(EncodedSequence().apply { sequence = encodedSequence }) ?: throwInvalidInputUrl()
 
-        val urlEntry = urlEntryOpt.get()
         if (isUrlEntryExpired(urlEntry)) {
             throwInvalidInputUrl()
         }
