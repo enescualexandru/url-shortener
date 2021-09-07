@@ -1,3 +1,3 @@
 package com.shortener.dto
 
-class UrlShortenRequest(val longUrl: String)
+data class UrlShortenRequest(val longUrl: String)
