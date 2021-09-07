@@ -1,4 +1,4 @@
-FROM adoptopenjdk:11-jre-hotspot
+FROM  eclipse-temurin:11
 VOLUME /tmp
 ARG JAR_FILE=target/*.jar
 COPY ${JAR_FILE} app.jar

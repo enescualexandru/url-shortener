@@ -33,8 +33,9 @@ Docker with docker-compose
   theoretically billions of entries without collisions
 - the input urls are validated using an external library, found in apache commons packages
   (http://commons.apache.org/proper/commons-validator/apidocs/org/apache/commons/validator/routines/UrlValidator.html)
-- we are allowing a user to input an url without a schema(normally, rendering an invalid url), by prepending to it the
-  default schema(http). Meaning that for eg. `google.com` will be accepted, while `$#@le.com` will not be
+- we are allowing a user to input an url(uri's, in the broader sense, like eg. `mailto:John.Doe@example.com` are not valid urls, thus not valid)
+without a schema(normally, rendering an invalid one), by prepending to it the default schema(http).
+Meaning that for eg. `google.com` will be accepted, while `$#@le.com` will not.
 - when making a convert url request, the user will be provided with the shorter version, and he is able to use it
 - we are using a server-side Java template engine, namely Thymeleaf, for easy and enjoyable testing(within the scope of
   this app). The application can be easily converted to a Rest API.
