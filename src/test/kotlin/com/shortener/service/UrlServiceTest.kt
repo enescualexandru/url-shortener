@@ -1,8 +1,8 @@
 package com.shortener.service
 
-import com.shortener.domain.EncodedSequence
-import com.shortener.domain.UrlEntry
-import com.shortener.domain.UrlEntryRepository
+import com.shortener.data.domain.EncodedSequence
+import com.shortener.data.domain.UrlEntry
+import com.shortener.data.repository.UrlEntryRepository
 import com.shortener.dto.UrlShortenRequest
 import com.shortener.exception.InvalidInputUrl
 import org.assertj.core.api.Assertions.assertThat

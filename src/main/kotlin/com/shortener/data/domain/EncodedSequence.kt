@@ -1,4 +1,4 @@
-package com.shortener.domain
+package com.shortener.data.domain
 
 import org.hibernate.annotations.NaturalId
 import java.io.Serializable
@@ -25,16 +25,13 @@ class EncodedSequence : Serializable {
 
         other as EncodedSequence
 
-        if (id != other.id) return false
         if (sequence != other.sequence) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        var result = id?.hashCode() ?: 0
-        result = 31 * result + sequence.hashCode()
-        return result
+        return sequence.hashCode()
     }
 
 }

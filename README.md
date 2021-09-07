@@ -40,13 +40,13 @@ Meaning that for eg. `google.com` will be accepted, while `$#@le.com` will not.
 - we are using a server-side Java template engine, namely Thymeleaf, for easy and enjoyable testing(within the scope of
   this app). The application can be easily converted to a Rest API.
 - for unit testing, we are using an in memory db - h2
+- `Redis` is used for caching, `lazy loading ` as the caching strategy
 
 ---
 
 ## TODO's
 
 - add security, allow user registration and login, implement the features described for the registered users
-- add cashing mechanism(using an external provider, maybe `memached`)
 - add integration testing(for our controllers)
 - deploy the app to a PaaS(maybe `Heroku`)
 
@@ -68,6 +68,9 @@ Meaning that for eg. `google.com` will be accepted, while `$#@le.com` will not.
 - `docker-compose up --build`
 - open any browser and go to `localhost` or `localhost:8080`
 
-**NOTE:** two containers are started, one being the postgresql db and the other one, our spring boot app. The app's jvm
+**NOTE:** Three containers are started: redis, postgresql db & the spring boot app. The app's jvm
 is started on debug mode, the debug port is `5005`. The postgres db can be reached at port `5432`, with the dbname, user
 and password specified in the docker-compose file.
+
+**NOTE FOR CACHING:**  Redis cli can be accessed by `docker exec -it redis redis-cli`, then `auth {password}`(password in the docker-compose file).
+Enter `keys *` to obtain the keys values. `monitor` streams back every command processed by the Redis server.

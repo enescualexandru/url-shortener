@@ -1,9 +1,9 @@
 package com.shortener.service
 
-import com.shortener.domain.EncodedSequence
-import com.shortener.cache.GenericCachedRepository
-import com.shortener.domain.UrlEntry
-import com.shortener.domain.UrlEntryRepository
+import com.shortener.data.domain.EncodedSequence
+import com.shortener.data.domain.UrlEntry
+import com.shortener.data.repository.UrlEntryRepositoryBase
+import com.shortener.data.repository.UrlEntryRepository
 import com.shortener.dto.UrlShortenRequest
 import com.shortener.dto.UrlShortenResponse
 import com.shortener.exception.InvalidInputUrl
@@ -26,7 +26,7 @@ class UrlServiceImpl(
     private val urlEntryRepository: UrlEntryRepository,
     private val idEncoder: IdEncoder,
     private val urlValidator: UrlValidator,
-    private val cachedUrlEntryRepository: GenericCachedRepository<UrlEntry, Long>
+    private val urlEntryRepositoryCacheImpl: UrlEntryRepositoryBase
 ) : UrlService {
 
     @Transactional(rollbackFor = [Exception::class])
@@ -41,29 +41,19 @@ class UrlServiceImpl(
             expiresAt = createdAt.plusHours(getNoUserUrlExpiresDays())
         }
 
-        val persistedUrlEntry = urlEntryRepository.save(urlEntry)
+        val persistedUrlEntry = urlEntryRepositoryCacheImpl.save(urlEntry)
         val encodedId = idEncoder.encode(persistedUrlEntry.id!!)
         persistedUrlEntry.encodedSequence = EncodedSequence().apply { sequence = encodedId }
-        urlEntryRepository.save(urlEntry)
+        urlEntryRepositoryCacheImpl.save(persistedUrlEntry)
 
-        val persistedUrlEntryId = cachedUrlEntryRepository.save(urlEntry).getId()
-        val encodedUrlEntryId = idEncoder.encode(persistedUrlEntryId!!)
-        val url = addBaseUrlToEncodedSequence(encodedUrlEntryId)
+        val url = addBaseUrlToEncodedSequence(encodedId)
         return UrlShortenResponse(url)
     }
 
-    override fun decodeUrl(encodedSequence: String): String {
-        val decodedEntriesId = idEncoder.decode(encodedSequence)
-        if (decodedEntriesId.isEmpty()) {
-            throwInvalidInputUrl()
-        }
-        val urlEntryOpt: Optional<UrlEntry> = cachedUrlEntryRepository.findById(decodedEntriesId[0])
-        if (urlEntryOpt.isEmpty) {
-            throwInvalidInputUrl()
-        }
+    override fun decodeSequence(encodedSequence: String): String {
+        val urlEntry = urlEntryRepositoryCacheImpl.findByEncodedSequence(EncodedSequence().apply { sequence = encodedSequence }) ?: throwInvalidInputUrl()
 
-        val urlEntry:UrlEntry = urlEntryOpt.get()
-        if (!isShortenedUrlValid(urlEntry)) {
+        if (isUrlEntryExpired(urlEntry)) {
             throwInvalidInputUrl()
         }
 
@@ -80,7 +70,7 @@ class UrlServiceImpl(
 
     private fun throwInvalidInputUrl(): Nothing = throw InvalidInputUrl("The shortened URL is not valid")
 
-    private fun isUrlEntryExpired(urlEntry: UrlEntry): Boolean = urlEntry.expiresAt!!.isBefore(LocalDateTime.now())
+    private fun isUrlEntryExpired(urlEntry: UrlEntry): Boolean = urlEntry.expiresAt.isBefore(LocalDateTime.now())
 
     private fun addDefaultSchemaIfMissing(requestUrl: String): String {
         if (requestUrl.lowercase(Locale.getDefault()).startsWith(HTTP_SCHEMA) ||

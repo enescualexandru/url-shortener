@@ -1,6 +1,6 @@
-package com.shortener.cache
+package com.shortener.data.cache
 
-import com.shortener.domain.UrlEntry
+import com.shortener.data.domain.UrlEntry
 import org.springframework.cache.annotation.EnableCaching
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -14,12 +14,13 @@ import org.springframework.data.redis.serializer.StringRedisSerializer
 class RedisCacheConfiguration {
 
     @Bean
-    fun redisTemplateUrlEntry(connectionFactory: RedisConnectionFactory?): RedisTemplate<Long?, UrlEntry?> {
-        val template: RedisTemplate<Long?, UrlEntry?> = RedisTemplate()
+    fun redisTemplateUrlEntry(connectionFactory: RedisConnectionFactory?): RedisTemplate<String, UrlEntry> {
+        val template: RedisTemplate<String, UrlEntry> = RedisTemplate()
         template.setConnectionFactory(connectionFactory!!)
         template.keySerializer = StringRedisSerializer()
         template.valueSerializer = GenericJackson2JsonRedisSerializer()
 
         return template
     }
+
 }

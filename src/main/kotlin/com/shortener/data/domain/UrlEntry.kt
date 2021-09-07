@@ -1,4 +1,4 @@
-package com.shortener.domain
+package com.shortener.data.domain
 
 import org.springframework.format.annotation.DateTimeFormat
 import java.io.Serializable
