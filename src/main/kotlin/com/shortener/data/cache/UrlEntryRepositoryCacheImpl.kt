@@ -2,7 +2,6 @@ package com.shortener.data.cache
 
 import com.shortener.data.domain.EncodedSequence
 import com.shortener.data.domain.UrlEntry
-import com.shortener.data.repository.UrlEntryRepository
 import com.shortener.data.repository.UrlEntryRepositoryBase
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
@@ -17,7 +16,7 @@ class UrlEntryRepositoryCacheImpl : UrlEntryRepositoryBase {
 
     @Autowired
     @Qualifier("urlEntryRepository")
-    private lateinit var urlEntryRepository: UrlEntryRepository
+    private lateinit var urlEntryRepository: UrlEntryRepositoryBase
 
     @CacheEvict(
         beforeInvocation = true,
@@ -38,7 +37,7 @@ class UrlEntryRepositoryCacheImpl : UrlEntryRepositoryBase {
     @Cacheable(
         value = [CACHE_NAME_URL_ENTRY],
         key = "#encodedSequence.sequence",
-        condition = "#encodedSequence.sequence != null"
+        unless = "#encodedSequence.sequence == '' || #result == null"
     )
     override fun findByEncodedSequence(encodedSequence: EncodedSequence): UrlEntry? =
         urlEntryRepository.findByEncodedSequence(encodedSequence)

@@ -40,7 +40,7 @@ Meaning that for eg. `google.com` will be accepted, while `$#@le.com` will not.
 - we are using a server-side Java template engine, namely Thymeleaf, for easy and enjoyable testing(within the scope of
   this app). The application can be easily converted to a Rest API.
 - for unit testing, we are using an in memory db - h2
-- `Redis` is used for caching, `lazy loading ` as the caching strategy
+- `Redis` is used for caching, `lazy loading ` as the caching strategy(cache on retrieval, evict on save/update/delete)
 
 ---
 
@@ -73,4 +73,4 @@ is started on debug mode, the debug port is `5005`. The postgres db can be reach
 and password specified in the docker-compose file.
 
 **NOTE FOR CACHING:**  Redis cli can be accessed by `docker exec -it redis redis-cli`, then `auth {password}`(password in the docker-compose file).
-Enter `keys *` to obtain the keys values. `monitor` streams back every command processed by the Redis server.
+Enter `keys *` to list all the key entries. `monitor` streams back every command processed by the Redis server.
