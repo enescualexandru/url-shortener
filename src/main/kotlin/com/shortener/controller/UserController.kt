@@ -1,4 +1,4 @@
-package com.shortener.controller.rest
+package com.shortener.controller
 
 import com.shortener.dto.UserLoginRequest
 import com.shortener.dto.UserLoginResponse
