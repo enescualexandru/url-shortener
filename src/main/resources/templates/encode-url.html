@@ -4,7 +4,7 @@
       xmlns="http://www.w3.org/1999/xhtml"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout}">
+      layout:decorate="~{layout}" xmlns:sec="http://www.w3.org/1999/xhtml">
 
 <head>
     <title>URL Shortener</title>
@@ -19,6 +19,7 @@
                <h2 class="section-title">URL Shortener</h2>
             </div>
 
+
             <div class="row justify-content-start">
                 <form method="post" th:object="${urlShortenRequest}">
                     <div class="form-group">
@@ -31,13 +32,15 @@
                 </form>
             </div>
 
-            <div class="row justify-content-start">
-                <h2 class="section-title">All shortened URLs</h2>
-                <ul class="list-group">
-                    <li class="list-group-item" th:each="item:${allEncodedUrls}">
-                       <a href="[(${item.shortenedUrl})]" class="link-primary" th:href="@{${item.shortenedUrl}}">[(${item.shortenedUrl})]</a>
-                    </li>
-                </ul>
+            <div sec:authorize="isAuthenticated()">
+                <div class="row justify-content-start">
+                    <h2 class="section-title">All shortened URLs</h2>
+                    <ul class="list-group">
+                        <li class="list-group-item" th:each="item:${allEncodedUrls}">
+                            <a href="[(${item.shortenedUrl})]" class="link-primary" th:href="@{${item.shortenedUrl}}">[(${item.shortenedUrl})]</a>
+                        </li>
+                    </ul>
+                </div>
             </div>
 
         </div>

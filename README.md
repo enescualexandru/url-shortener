@@ -37,16 +37,17 @@ Docker with docker-compose
 without a schema(normally, rendering an invalid one), by prepending to it the default schema(http).
 Meaning that for eg. `google.com` will be accepted, while `$#@le.com` will not.
 - when making a convert url request, the user will be provided with the shorter version, and he is able to use it
-- we are using a server-side Java template engine, namely Thymeleaf, for easy and enjoyable testing(within the scope of
-  this app). The application can be easily converted to a Rest API.
+- the application is a Rest API.
 - for unit testing, we are using an in memory db - h2
 - `Redis` is used for caching, `lazy loading ` as the caching strategy(cache on retrieval, evict on save/update/delete)
+- application is secured, allowing user registration and login, implement the features described for the registered users
+(for the time being, they are able to get their url shortening history)
 
 ---
 
 ## TODO's
 
-- add security, allow user registration and login, implement the features described for the registered users
+- add more features for registered users(custom expire time for urls, option to delete them etc)
 - add integration testing(for our controllers)
 - deploy the app to a PaaS(maybe `Heroku`)
 

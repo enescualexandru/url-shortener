@@ -1,0 +1,130 @@
+<!doctype html>
+
+<html th:with="lang=${#locale.language}" th:lang="${lang}"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
+<head>
+    <title>Register</title>
+</head>
+
+<body>
+
+<div class="wrapper" layout:fragment="content">
+
+    <div class="section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 col-md-offset-3">
+                    <h2 class="section-title">Register a user</h2>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 col-md-offset-3">
+
+                    <form method="post" th:action="@{/register}" th:object="${userRegisterRequest}">
+
+                        <label for="email" th:text="#{email}">Email</label>
+                        <div class="form-group"
+                             th:classappend="${#fields.hasErrors('email')}?'has-error has-feedback'">
+                            <input type="text" id="email" class="form-control" th:placeholder="#{email}"
+                                   th:field="*{email}"/>
+                            <span class="fa fa-remove form-control-feedback"
+                                  th:if="${#fields.hasErrors('email')}"></span>
+                        </div>
+                        <p class="text-danger small" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></p>
+
+                        <label for="password" th:text="#{password}">Password</label>
+                        <div class="form-group"
+                             th:classappend="${#fields.hasErrors('password')}?'has-error has-feedback'">
+                            <input type="password" id="password" class="form-control" th:placeholder="#{password}"
+                                   th:field="*{password}"/>
+                            <span class="fa fa-remove form-control-feedback"
+                                  th:if="${#fields.hasErrors('password')}"></span>
+                        </div>
+                        <p class="text-danger small" th:if="${#fields.hasErrors('password')}"
+                           th:errors="*{password}"></p>
+
+                        <label for="name" th:text="#{name}">First name</label>
+                        <div class="form-group"
+                             th:classappend="${#fields.hasErrors('name')}?'has-error has-feedback'">
+                            <input id="name" type="text" class="form-control" th:placeholder="#{name}"
+                                   th:field="*{name}"/>
+                            <span class="fa fa-remove form-control-feedback"
+                                  th:if="${#fields.hasErrors('name')}"></span>
+                        </div>
+                        <p class="text-danger small" th:if="${#fields.hasErrors('name')}"
+                           th:errors="*{name}"></p>
+
+<!--                        <label for="lastName" th:text="#{lastName}">Last name</label>-->
+<!--                        <div class="form-group"-->
+<!--                             th:classappend="${#fields.hasErrors('lastName')}?'has-error has-feedback'">-->
+<!--                            <input id="lastName" type="text" class="form-control" th:placeholder="#{lastName}"-->
+<!--                                   th:field="*{lastName}"/>-->
+<!--                            <span class="fa fa-remove form-control-feedback"-->
+<!--                                  th:if="${#fields.hasErrors('lastName')}"></span>-->
+<!--                        </div>-->
+<!--                        <p class="text-danger small" th:if="${#fields.hasErrors('lastName')}"-->
+<!--                           th:errors="*{lastName}"></p>-->
+
+<!--                        <label for="phone" th:text="#{phone}">Phone</label>-->
+<!--                        <div class="form-group"-->
+<!--                             th:classappend="${#fields.hasErrors('phone')}?'has-error has-feedback'">-->
+<!--                            <input type="tel" id="phone" class="form-control" th:placeholder="#{phone}"-->
+<!--                                   th:field="*{phone}"/>-->
+<!--                            <span class="fa fa-remove form-control-feedback"-->
+<!--                                  th:if="${#fields.hasErrors('phone')}"></span>-->
+<!--                        </div>-->
+<!--                        <p class="text-danger small" th:if="${#fields.hasErrors('phone')}"-->
+<!--                           th:errors="*{phone}"></p>-->
+
+<!--                        <label for="birthDate" th:text="#{dob}">Date of birth</label>-->
+<!--                        <div class="form-group"-->
+<!--                             th:classappend="${#fields.hasErrors('birthDate')}?'has-error has-feedback'">-->
+<!--                            <input type="date" id="birthDate" class="form-control" th:placeholder="#{dob}"-->
+<!--                                   th:field="*{birthDate}"/>-->
+<!--                            <span class="fa fa-remove form-control-feedback"-->
+<!--                                  th:if="${#fields.hasErrors('birthDate')}"></span>-->
+<!--                        </div>-->
+<!--                        <p class="text-danger small" th:if="${#fields.hasErrors('birthDate')}"-->
+<!--                           th:errors="*{birthDate}"></p>-->
+
+<!--                        <label for="role" th:text="#{role}">Role</label>-->
+<!--                        <div class="form-group"-->
+<!--                             th:classappend="${#fields.hasErrors('role')}?'has-error has-feedback'">-->
+<!--                            <select id="role" class="form-control " th:field="*{role}">-->
+<!--                                <option hidden th:value="${userRoles[userRoles.size() - 1]}"-->
+<!--                                        th:text="#{${userRoles[userRoles.size() - 1].description}}" selected></option>-->
+<!--                                <option-->
+<!--                                        th:each="role : ${userRoles}"-->
+<!--                                        th:text="#{${role.description}}"-->
+<!--                                        th:value="${role}">-->
+<!--                                </option>-->
+<!--                            </select>-->
+<!--                            <span class="fa fa-remove form-control-feedback"-->
+<!--                                  th:if="${#fields.hasErrors('role')}"></span>-->
+<!--                        </div>-->
+<!--                        <p class="text-danger small" th:if="${#fields.hasErrors('role')}"-->
+<!--                           th:errors="*{role}"></p>-->
+                        <button type="submit" class="btn btn-success">Register</button>
+<!--                        <div class="submit">-->
+<!--                            <input type="submit" class="btn btn-info btn-fill" th:value="#{register}"/>-->
+<!--                        </div>-->
+                    </form>
+
+                </div>
+                <div class="col-md-4 col-md-offset-2">
+                </div>
+            </div>
+        </div>
+    </div><!-- section -->
+
+    <div class="space-50"></div>
+
+</div>
+
+</body>
+
+</html>

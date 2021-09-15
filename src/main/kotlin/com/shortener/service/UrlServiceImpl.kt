@@ -1,12 +1,14 @@
 package com.shortener.service
 
-import com.shortener.data.domain.EncodedSequence
-import com.shortener.data.domain.UrlEntry
+import com.shortener.data.domain.*
 import com.shortener.data.repository.UrlEntryRepositoryBase
 import com.shortener.data.repository.UrlEntryRepository
+import com.shortener.data.repository.UserRepository
+import com.shortener.dto.UrlEntryHistoryResponse
 import com.shortener.dto.UrlShortenRequest
 import com.shortener.dto.UrlShortenResponse
-import com.shortener.exception.InvalidInputUrl
+import com.shortener.exception.InvalidDataException
+import com.shortener.utils.AuthUtils
 import com.shortener.utils.IdEncoder
 import com.shortener.utils.UrlValidator
 import org.springframework.stereotype.Service
@@ -26,6 +28,8 @@ class UrlServiceImpl(
     private val urlEntryRepository: UrlEntryRepository,
     private val idEncoder: IdEncoder,
     private val urlValidator: UrlValidator,
+    private val authUtils: AuthUtils,
+    private val userRepository: UserRepository,
     private val urlEntryRepositoryCacheImpl: UrlEntryRepositoryBase
 ) : UrlService {
 
@@ -34,10 +38,12 @@ class UrlServiceImpl(
         val fixedRequestUrl = addDefaultSchemaIfMissing(request.longUrl)
 
         if (!urlValidator.isValidUrl(fixedRequestUrl)) {
-            throw InvalidInputUrl("The URL you provided is invalid")
+            throw InvalidDataException("The URL you provided is invalid")
         }
 
-        val urlEntry = UrlEntry(fixedRequestUrl).apply {
+        val userId = authUtils.getUserPrincipalFromAuth()?.id
+        val user = if (userId != null) userRepository.findById(userId).get() else null
+        val urlEntry = UrlEntry(fixedRequestUrl, user).apply {
             expiresAt = createdAt.plusHours(getNoUserUrlExpiresDays())
         }
 
@@ -51,7 +57,9 @@ class UrlServiceImpl(
     }
 
     override fun decodeSequence(encodedSequence: String): String {
-        val urlEntry = urlEntryRepositoryCacheImpl.findByEncodedSequence(EncodedSequence().apply { sequence = encodedSequence }) ?: throwInvalidInputUrl()
+        val urlEntry =
+            urlEntryRepositoryCacheImpl.findByEncodedSequence(EncodedSequence().apply { sequence = encodedSequence })
+                ?: throwInvalidInputUrl()
 
         if (isUrlEntryExpired(urlEntry)) {
             throwInvalidInputUrl()
@@ -60,15 +68,28 @@ class UrlServiceImpl(
         return urlEntry.longUrl
     }
 
-    override fun getAllShortenedUrls(): List<UrlShortenResponse> = urlEntryRepository.findAllByOrderByIdDesc().map {
-        val encodedId = idEncoder.encode(it.id!!)
-        val shortenedUrl = addBaseUrlToEncodedSequence(encodedId)
-        UrlShortenResponse(shortenedUrl)
+    override fun getUrlHistoryForCurrentUser(): List<UrlEntryHistoryResponse> {
+        val userId = authUtils.getUserPrincipalFromAuth()!!.id
+        val history = if (userId != null) urlEntryRepository.findAllByUserIdOrderByIdDesc(userId) else null
+
+        if (history!!.isEmpty()) {
+            return listOf()
+        }
+
+        val historyList = history.map {
+            UrlEntryHistoryResponse(
+                it.id!!,
+                addBaseUrlToEncodedSequence(it.encodedSequence!!.sequence),
+                it.longUrl
+            )
+        }.toList()
+
+        return historyList
     }
 
     private fun getNoUserUrlExpiresDays(): Long = URL_EXPIRES_DAYS_NO_USER
 
-    private fun throwInvalidInputUrl(): Nothing = throw InvalidInputUrl("The shortened URL is not valid")
+    private fun throwInvalidInputUrl(): Nothing = throw InvalidDataException("The shortened URL is not valid")
 
     private fun isUrlEntryExpired(urlEntry: UrlEntry): Boolean = urlEntry.expiresAt.isBefore(LocalDateTime.now())
 

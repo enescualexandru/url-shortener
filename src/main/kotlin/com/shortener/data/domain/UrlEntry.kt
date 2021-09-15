@@ -13,7 +13,11 @@ class UrlEntry(
     @Column(name = "long_url", length = 2048)
     @Size(max = 2048)
     var longUrl: String,
-): Serializable {
+
+    @ManyToOne(optional = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    var user: User? = null
+) : Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

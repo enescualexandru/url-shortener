@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface UrlEntryRepository : JpaRepository<UrlEntry, Long>, UrlEntryRepositoryBase {
-    fun findAllByOrderByIdDesc(): List<UrlEntry>
+    fun findAllByUserIdOrderByIdDesc(id: Long): List<UrlEntry>
 }
