@@ -13,9 +13,9 @@ import org.springframework.data.redis.serializer.StringRedisSerializer
 class RedisCacheConfiguration {
 
     @Bean
-    fun redisTemplateUrlEntry(connectionFactory: RedisConnectionFactory?): RedisTemplate<String, UrlEntry> {
+    fun redisTemplateUrlEntry(connectionFactory: RedisConnectionFactory): RedisTemplate<String, UrlEntry> {
         val template: RedisTemplate<String, UrlEntry> = RedisTemplate()
-        template.setConnectionFactory(connectionFactory!!)
+        template.setConnectionFactory(connectionFactory)
         template.keySerializer = StringRedisSerializer()
         return template
     }
