@@ -43,7 +43,7 @@ class UrlServiceImpl(
 
         val persistedUrlEntry = urlEntryRepositoryCacheImpl.save(urlEntry)
         val encodedId = idEncoder.encode(persistedUrlEntry.id!!)
-        persistedUrlEntry.encodedSequence = EncodedSequence().apply { sequence = encodedId }
+        persistedUrlEntry.encodedSequence = EncodedSequence(encodedId)
         urlEntryRepositoryCacheImpl.save(persistedUrlEntry)
 
         val url = addBaseUrlToEncodedSequence(encodedId)
@@ -51,7 +51,7 @@ class UrlServiceImpl(
     }
 
     override fun decodeSequence(encodedSequence: String): String {
-        val urlEntry = urlEntryRepositoryCacheImpl.findByEncodedSequence(EncodedSequence().apply { sequence = encodedSequence }) ?: throwInvalidInputUrl()
+        val urlEntry = urlEntryRepositoryCacheImpl.findByEncodedSequence(EncodedSequence(encodedSequence)) ?: throwInvalidInputUrl()
 
         if (isUrlEntryExpired(urlEntry)) {
             throwInvalidInputUrl()

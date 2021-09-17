@@ -3,24 +3,19 @@ package com.shortener.data.cache
 import com.shortener.data.domain.EncodedSequence
 import com.shortener.data.domain.UrlEntry
 import com.shortener.data.repository.UrlEntryRepositoryBase
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.cache.annotation.CacheConfig
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Repository
 
-const val CACHE_NAME_URL_ENTRY = "url-entry-cache"
-
-@Component
-class UrlEntryRepositoryCacheImpl : UrlEntryRepositoryBase {
-
-    @Autowired
-    @Qualifier("urlEntryRepository")
-    private lateinit var urlEntryRepository: UrlEntryRepositoryBase
+@Repository
+@CacheConfig(cacheNames = ["url-entry-cache"])
+class UrlEntryRepositoryCacheImpl(@Qualifier("urlEntryRepository") private val urlEntryRepository: UrlEntryRepositoryBase) :
+    UrlEntryRepositoryBase {
 
     @CacheEvict(
         beforeInvocation = true,
-        value = [CACHE_NAME_URL_ENTRY],
         key = "#entry.encodedSequence.sequence",
         condition = "#entry.encodedSequence != null"
     )
@@ -28,14 +23,12 @@ class UrlEntryRepositoryCacheImpl : UrlEntryRepositoryBase {
 
     @CacheEvict(
         beforeInvocation = true,
-        value = [CACHE_NAME_URL_ENTRY],
         key = "#entry.encodedSequence.sequence",
         condition = "#entry.encodedSequence != null"
     )
     override fun delete(entry: UrlEntry) = urlEntryRepository.delete(entry)
 
     @Cacheable(
-        value = [CACHE_NAME_URL_ENTRY],
         key = "#encodedSequence.sequence",
         unless = "#encodedSequence.sequence == '' || #result == null"
     )

@@ -37,13 +37,13 @@ class UrlEntryRepositoryCacheImplTests(
 
     @Test
     fun `Non existent entries are not cached`() {
-        urlEntryRepositoryCacheImpl.findByEncodedSequence(EncodedSequence().apply { sequence = "a1b1" })
+        urlEntryRepositoryCacheImpl.findByEncodedSequence(EncodedSequence("a1b1"))
         Assertions.assertThat(getAllKeysFromCache().size).isEqualTo(0)
     }
 
     @Test
     fun `Bad arguments, no entry will be cached`() {
-        urlEntryRepositoryCacheImpl.findByEncodedSequence(EncodedSequence().apply { sequence = "" })
+        urlEntryRepositoryCacheImpl.findByEncodedSequence(EncodedSequence("a1b1"))
         Assertions.assertThat(getAllKeysFromCache().size).isEqualTo(0)
     }
 
@@ -52,7 +52,7 @@ class UrlEntryRepositoryCacheImplTests(
         val urlEntry = TestUtils.createUrlEntry()
         val persistedEntry = urlEntryRepositoryCacheImpl.save(urlEntry)
         val encodedSequence = persistedEntry.encodedSequence!!.sequence
-        urlEntryRepositoryCacheImpl.findByEncodedSequence(EncodedSequence().apply { sequence = encodedSequence })
+        urlEntryRepositoryCacheImpl.findByEncodedSequence(EncodedSequence(encodedSequence))
         Assertions.assertThat(getAllKeysFromCache().size).isEqualTo(1)
         Assertions.assertThat(isSequenceCached(encodedSequence)).isTrue
         Assertions.assertThat(persistedEntry).isEqualTo(getUrlEntryFromCache(encodedSequence))
@@ -64,25 +64,45 @@ class UrlEntryRepositoryCacheImplTests(
         var persistedEntry = urlEntryRepositoryCacheImpl.save(urlEntry)
         val encodedSequence = persistedEntry.encodedSequence!!.sequence
         persistedEntry =
-            urlEntryRepositoryCacheImpl.findByEncodedSequence(EncodedSequence().apply { sequence = encodedSequence })!!
+            urlEntryRepositoryCacheImpl.findByEncodedSequence(EncodedSequence(encodedSequence))!!
         Assertions.assertThat(getAllKeysFromCache().size).isEqualTo(1)
 
         urlEntryRepositoryCacheImpl.delete(persistedEntry)
         Assertions.assertThat(getAllKeysFromCache().size).isEqualTo(0)
     }
 
-    fun getAllKeysFromCache(): Set<ByteArray> =
+    @Test
+    fun `Entries are evicted from cache on saving`() {
+        val urlEntry = TestUtils.createUrlEntry()
+        var persistedEntry = urlEntryRepositoryCacheImpl.save(urlEntry)
+        val encodedSequence = persistedEntry.encodedSequence!!.sequence
+        persistedEntry =
+            urlEntryRepositoryCacheImpl.findByEncodedSequence(EncodedSequence(encodedSequence))!!
+        Assertions.assertThat(getAllKeysFromCache().size).isEqualTo(1)
+
+        urlEntryRepositoryCacheImpl.save(persistedEntry)
+        Assertions.assertThat(getAllKeysFromCache().size).isEqualTo(0)
+    }
+
+    private fun getAllKeysFromCache(): Set<ByteArray> =
         redisTemplate.connectionFactory!!.connection.keys("*".toByteArray()) as Set<ByteArray>
 
-    fun isSequenceCached(sequence: String): Boolean =
-        getAllKeysFromCache().map { getKeyFromByteArray(it) }.any { it.contains(sequence) }
+    private fun getValueFromCache(key: ByteArray) = redisTemplate.connectionFactory!!.connection.get(key)
 
-    fun getKeyFromByteArray(key: ByteArray): String = redisTemplate.keySerializer.deserialize(key).toString()
+    private fun isSequenceCached(sequence: String): Boolean =
+        getAllKeysFromCache().map { deserializeKey(it) }.any { it.contains(sequence) }
 
-    fun getValueFromByteArray(value: ByteArray): UrlEntry? =
+    private fun deserializeKey(key: ByteArray): String = redisTemplate.keySerializer.deserialize(key).toString()
+
+    private fun deserializeValue(value: ByteArray?): UrlEntry =
         redisTemplate.valueSerializer.deserialize(value) as UrlEntry
 
-    fun getUrlEntryFromCache(sequence: String?): UrlEntry? =
-        getAllKeysFromCache().map { getValueFromByteArray((redisTemplate.connectionFactory!!.connection.get(it)!!)) }
-            .first()
+    private fun getUrlEntryFromCache(sequence: String): UrlEntry? {
+        if (isSequenceCached(sequence)) {
+            val key = getAllKeysFromCache().map { deserializeKey(it) }.first { it.endsWith(sequence) }
+            return deserializeValue(getValueFromCache(key.toByteArray()))
+        }
+
+        return null
+    }
 }

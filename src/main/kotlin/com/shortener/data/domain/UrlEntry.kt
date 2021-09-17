@@ -12,7 +12,7 @@ import javax.validation.constraints.Size
 class UrlEntry(
     @Column(name = "long_url", length = 2048)
     @Size(max = 2048)
-    var longUrl: String,
+    var longUrl: String
 ): Serializable {
 
     @Id
