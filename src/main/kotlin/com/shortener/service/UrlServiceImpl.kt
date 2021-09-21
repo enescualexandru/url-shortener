@@ -1,14 +1,15 @@
 package com.shortener.service
 
+import com.shortener.data.cache.CacheService
 import com.shortener.data.domain.EncodedSequence
 import com.shortener.data.domain.UrlEntry
-import com.shortener.data.repository.UrlEntryRepositoryBase
 import com.shortener.data.repository.UrlEntryRepository
 import com.shortener.dto.UrlShortenRequest
 import com.shortener.dto.UrlShortenResponse
 import com.shortener.exception.InvalidInputUrl
 import com.shortener.utils.IdEncoder
 import com.shortener.utils.UrlValidator
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
@@ -26,8 +27,11 @@ class UrlServiceImpl(
     private val urlEntryRepository: UrlEntryRepository,
     private val idEncoder: IdEncoder,
     private val urlValidator: UrlValidator,
-    private val urlEntryRepositoryCacheImpl: UrlEntryRepositoryBase
+    private val cacheService: CacheService<String, UrlEntry>
 ) : UrlService {
+
+    @Value("\${spring.cache.type}")
+    private var cacheType: String = "none"
 
     @Transactional(rollbackFor = [Exception::class])
     override fun shortenUrl(request: UrlShortenRequest): UrlShortenResponse {
@@ -41,17 +45,31 @@ class UrlServiceImpl(
             expiresAt = createdAt.plusHours(getNoUserUrlExpiresDays())
         }
 
-        val persistedUrlEntry = urlEntryRepositoryCacheImpl.save(urlEntry)
+        val persistedUrlEntry = urlEntryRepository.save(urlEntry)
         val encodedId = idEncoder.encode(persistedUrlEntry.id!!)
         persistedUrlEntry.encodedSequence = EncodedSequence(encodedId)
-        urlEntryRepositoryCacheImpl.save(persistedUrlEntry)
+        urlEntryRepository.save(persistedUrlEntry)
+        if (isCachingEnabled()) {
+            cacheService.delete(encodedId)
+        }
 
         val url = addBaseUrlToEncodedSequence(encodedId)
         return UrlShortenResponse(url)
     }
 
     override fun decodeSequence(encodedSequence: String): String {
-        val urlEntry = urlEntryRepositoryCacheImpl.findByEncodedSequence(EncodedSequence(encodedSequence)) ?: throwInvalidInputUrl()
+        var urlEntry:UrlEntry? = null
+
+        if (isCachingEnabled()) {
+            urlEntry = cacheService.get(encodedSequence)
+        }
+
+        if (urlEntry == null) {
+            urlEntry = urlEntryRepository.findByEncodedSequence(EncodedSequence(encodedSequence)) ?: throwInvalidInputUrl()
+            if (isCachingEnabled()) {
+                cacheService.save(encodedSequence, urlEntry)
+            }
+        }
 
         if (isUrlEntryExpired(urlEntry)) {
             throwInvalidInputUrl()
@@ -83,5 +101,7 @@ class UrlServiceImpl(
     }
 
     private fun addBaseUrlToEncodedSequence(sequence: String): String = "$baseUrl/e/$sequence"
+
+    fun isCachingEnabled() = cacheType != "none"
 
 }
