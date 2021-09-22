@@ -1,8 +1,9 @@
 package com.shortener.service
 
-import com.shortener.domain.EncodedSequence
-import com.shortener.domain.UrlEntry
-import com.shortener.domain.UrlEntryRepository
+import com.shortener.data.cache.CacheWithRepositoryFallback
+import com.shortener.data.domain.EncodedSequence
+import com.shortener.data.domain.UrlEntry
+import com.shortener.data.repository.UrlEntryRepository
 import com.shortener.dto.UrlShortenRequest
 import com.shortener.dto.UrlShortenResponse
 import com.shortener.exception.InvalidInputUrl
@@ -11,7 +12,6 @@ import com.shortener.utils.UrlValidator
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
-import java.time.LocalDateTime
 import java.util.*
 
 private const val HTTP_SCHEMA = "http"
@@ -24,7 +24,8 @@ private val baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build
 class UrlServiceImpl(
     private val urlEntryRepository: UrlEntryRepository,
     private val idEncoder: IdEncoder,
-    private val urlValidator: UrlValidator
+    private val urlValidator: UrlValidator,
+    private val cacheWithRepositoryFallback: CacheWithRepositoryFallback<String, String, UrlEntry>
 ) : UrlService {
 
     @Transactional(rollbackFor = [Exception::class])
@@ -39,23 +40,18 @@ class UrlServiceImpl(
             expiresAt = createdAt.plusHours(getNoUserUrlExpiresDays())
         }
 
-        val persistedUrlEntry = urlEntryRepository.save(urlEntry)
-        val encodedId = idEncoder.encode(persistedUrlEntry.id!!)
-        persistedUrlEntry.encodedSequence = EncodedSequence().apply { sequence = encodedId }
-        urlEntryRepository.save(urlEntry)
+        val savedEntity = cacheWithRepositoryFallback.save(null) { urlEntryRepository.save(urlEntry) }
+        val encodedId = idEncoder.encode(savedEntity.id!!)
+        savedEntity.encodedSequence = EncodedSequence(encodedId)
 
-        val url = addBaseUrlToEncodedSequence(encodedId)
-        return UrlShortenResponse(url)
+        cacheWithRepositoryFallback.save(savedEntity.encodedSequence!!.sequence) { urlEntryRepository.save(urlEntry) }
+
+        return UrlShortenResponse(addBaseUrlToEncodedSequence(encodedId))
     }
 
-    override fun decodeSequence(encodedSequence: String): String {
-        val urlEntry = urlEntryRepository.findByEncodedSequence(EncodedSequence().apply { sequence = encodedSequence }) ?: throwInvalidInputUrl()
-
-        if (isUrlEntryExpired(urlEntry)) {
-            throwInvalidInputUrl()
-        }
-
-        return urlEntry.longUrl
+    override fun decodeSequence(seq: String): String {
+        val fallback = { urlEntryRepository.findByEncodedSequence(EncodedSequence(seq))?.longUrl }
+        return cacheWithRepositoryFallback.getOrDefault(seq, fallback) ?: throwInvalidInputUrl()
     }
 
     override fun getAllShortenedUrls(): List<UrlShortenResponse> = urlEntryRepository.findAllByOrderByIdDesc().map {
@@ -67,8 +63,6 @@ class UrlServiceImpl(
     private fun getNoUserUrlExpiresDays(): Long = URL_EXPIRES_DAYS_NO_USER
 
     private fun throwInvalidInputUrl(): Nothing = throw InvalidInputUrl("The shortened URL is not valid")
-
-    private fun isUrlEntryExpired(urlEntry: UrlEntry): Boolean = urlEntry.expiresAt!!.isBefore(LocalDateTime.now())
 
     private fun addDefaultSchemaIfMissing(requestUrl: String): String {
         if (requestUrl.lowercase(Locale.getDefault()).startsWith(HTTP_SCHEMA) ||

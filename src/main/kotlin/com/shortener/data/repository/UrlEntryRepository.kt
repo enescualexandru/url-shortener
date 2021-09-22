@@ -1,11 +1,12 @@
-package com.shortener.domain
+package com.shortener.data.repository
 
+import com.shortener.data.domain.EncodedSequence
+import com.shortener.data.domain.UrlEntry
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
-import java.util.*
 
 @Repository
 interface UrlEntryRepository : JpaRepository<UrlEntry, Long> {
-    fun findAllByOrderByIdDesc(): List<UrlEntry>
     fun findByEncodedSequence(encodedSequence: EncodedSequence): UrlEntry?
+    fun findAllByOrderByIdDesc(): List<UrlEntry>
 }

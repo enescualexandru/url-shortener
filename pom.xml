@@ -53,6 +53,11 @@
             <artifactId>jackson-module-kotlin</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>2.12.5</version>
+        </dependency>
+        <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-reflect</artifactId>
         </dependency>
@@ -87,6 +92,19 @@
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <version>1.4.200</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- redis caching-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+            <version>2.5.4</version>
+        </dependency>
+        <!--embedded-redis, used for testing-->
+        <dependency>
+            <groupId>it.ozimov</groupId>
+            <artifactId>embedded-redis</artifactId>
+            <version>0.7.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -139,7 +157,8 @@
                         <exclude>**/shortener/controller/**/*</exclude>
                         <exclude>**/shortener/dto/**/*</exclude>
                         <exclude>**/shortener/exception/**/*</exclude>
-                        <exclude>**/shortener/domain/**/*</exclude>
+                        <exclude>**/shortener/data/domain/**/*</exclude>
+                        <exclude>**/shortener/data/repository/**/*</exclude>
                         <exclude>**/shortener/utils/**/*</exclude>
                     </excludes>
                 </configuration>

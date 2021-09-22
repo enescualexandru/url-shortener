@@ -1,6 +1,7 @@
-package com.shortener.domain
+package com.shortener.data.domain
 
 import org.springframework.format.annotation.DateTimeFormat
+import java.io.Serializable
 import java.time.LocalDateTime
 import javax.persistence.*
 import javax.validation.constraints.NotNull
@@ -11,8 +12,8 @@ import javax.validation.constraints.Size
 class UrlEntry(
     @Column(name = "long_url", length = 2048)
     @Size(max = 2048)
-    var longUrl: String,
-) {
+    var longUrl: String
+): Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
