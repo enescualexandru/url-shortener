@@ -5,6 +5,6 @@ import com.shortener.dto.UrlShortenResponse
 
 interface UrlService {
     fun shortenUrl(request: UrlShortenRequest): UrlShortenResponse
-    fun decodeSequence(encodedSequence: String): String
+    fun decodeSequence(seq: String): String
     fun getAllShortenedUrls(): List<UrlShortenResponse>
 }

@@ -74,16 +74,6 @@ class UrlServiceTests(
     }
 
     @Test
-    fun `A shortened url which has expired cannot be converted, and exception is thrown`() {
-        val encodedSequence = "a1b2"
-        val entry = TestUtils.createUrlEntry(GOOD_URL, encodedSequence, true)
-        urlEntryRepository.save(entry)
-
-        val exception = assertThrows<InvalidInputUrl> { urlService.decodeSequence(encodedSequence) }
-        assertInvalidShortenedInputUrlMessage(exception)
-    }
-
-    @Test
     fun `All the shortened entries(history) can be returned`() {
         val entry1 = TestUtils.createUrlEntry(GOOD_URL, "a1b2", false)
         val entry2 = TestUtils.createUrlEntry(GOOD_URL_NO_SCHEMA, "a1b3", false)

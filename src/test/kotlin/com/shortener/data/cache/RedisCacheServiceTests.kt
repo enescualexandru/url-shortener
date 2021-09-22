@@ -3,7 +3,6 @@ package com.shortener.data.cache
 import com.shortener.GOOD_URL
 import com.shortener.TestUtils
 import com.shortener.data.domain.EncodedSequence
-import com.shortener.data.domain.UrlEntry
 import com.shortener.data.repository.UrlEntryRepository
 import com.shortener.dto.UrlShortenRequest
 import com.shortener.exception.InvalidInputUrl
@@ -24,8 +23,8 @@ import org.springframework.transaction.annotation.Transactional
 class RedisCacheServiceTests(
     @Autowired val urlService: UrlService,
     @Autowired val urlEntryRepository: UrlEntryRepository,
-    @Autowired val redisTemplate: RedisTemplate<String, UrlEntry>,
-    @Autowired val cacheService: CacheService<String, UrlEntry>
+    @Autowired val redisTemplate: RedisTemplate<String, String>,
+    @Autowired val cacheService: CacheService<String, String>
 ) {
 
     @BeforeEach
@@ -36,34 +35,23 @@ class RedisCacheServiceTests(
     }
 
     @Test
-    fun `Save entry to cache`() {
+    fun `Save to cache and verify the result`() {
         val urlEntry = TestUtils.createUrlEntry()
         val sequence = urlEntry.encodedSequence!!.sequence
-        cacheService.save(sequence, urlEntry)
+        cacheService.save(sequence, urlEntry.longUrl)
+
         Assertions.assertThat(getAllKeysFromCache().size).isEqualTo(1)
-        Assertions.assertThat(urlEntry).isEqualTo(getUrlEntryFromCache(sequence))
+        Assertions.assertThat(cacheService.get(sequence)).isEqualTo(urlEntry.longUrl)
     }
 
     @Test
     fun `Delete entry from cache`() {
         val urlEntry = TestUtils.createUrlEntry()
         val sequence = urlEntry.encodedSequence!!.sequence
-        cacheService.save(sequence, urlEntry)
+        cacheService.save(sequence, urlEntry.longUrl)
         Assertions.assertThat(getAllKeysFromCache().size).isEqualTo(1)
         cacheService.delete(sequence)
         Assertions.assertThat(getAllKeysFromCache().size).isEqualTo(0)
-    }
-
-    @Test
-    fun `Get entry from cache`() {
-        val urlEntry = TestUtils.createUrlEntry()
-        val sequence = urlEntry.encodedSequence!!.sequence
-        cacheService.save(sequence, urlEntry)
-        System.err.println("KEYS: ")
-        getAllKeysFromCache().forEach { System.err.println(deserializeKey(it)) }
-
-        Assertions.assertThat(getAllKeysFromCache().size).isEqualTo(1)
-        Assertions.assertThat(cacheService.get(sequence)).isEqualTo(urlEntry)
     }
 
     @Test
@@ -86,29 +74,12 @@ class RedisCacheServiceTests(
         urlService.decodeSequence(sequence)
         val persistedEntry = urlEntryRepository.findByEncodedSequence(EncodedSequence(sequence))
         Assertions.assertThat(getAllKeysFromCache().size).isEqualTo(1)
-        Assertions.assertThat(persistedEntry).isEqualTo(getUrlEntryFromCache(sequence))
+        Assertions.assertThat(cacheService.get(sequence)).isEqualTo(persistedEntry?.longUrl)
     }
 
     private fun getAllKeysFromCache(): Set<ByteArray> =
         redisTemplate.connectionFactory!!.connection.keys("*".toByteArray()) as Set<ByteArray>
 
-    private fun getValueFromCache(key: ByteArray) = redisTemplate.connectionFactory!!.connection.get(key)
-
-    private fun isSequenceCached(sequence: String): Boolean =
-        getAllKeysFromCache().map { deserializeKey(it) }.any { it.contains(sequence) }
-
     private fun deserializeKey(key: ByteArray): String = redisTemplate.keySerializer.deserialize(key).toString()
-
-    private fun deserializeValue(value: ByteArray?): UrlEntry =
-        redisTemplate.valueSerializer.deserialize(value) as UrlEntry
-
-    private fun getUrlEntryFromCache(sequence: String): UrlEntry? {
-        if (isSequenceCached(sequence)) {
-            val key = getAllKeysFromCache().map { deserializeKey(it) }.first { it.endsWith(sequence) }
-            return deserializeValue(getValueFromCache(key.toByteArray()))
-        }
-
-        return null
-    }
 
 }
