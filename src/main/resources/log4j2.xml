@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="info">
+    <Appenders>
+        <Kafka name="Kafka" topic="test1">
+<!--            <JsonLayout complete="false" locationInfo="true" properties="true" propertiesAsList="true" eventEol="true"/>-->
+            <PatternLayout pattern="%date %message"/>
+            <Property name="bootstrap.servers">${env:SPRING_KAFKA_BOOTSTRAP-SERVERS}</Property>
+        </Kafka>
+    </Appenders>
+
+    <Loggers>
+        <Root level="WARN">
+            <AppenderRef ref="Kafka"/>
+            <AppenderRef ref="stdout"/>
+        </Root>
+        <Logger name="org.apache.kafka" level="ERROR" /> <!-- avoid recursive logging -->
+    </Loggers>
+</Configuration>

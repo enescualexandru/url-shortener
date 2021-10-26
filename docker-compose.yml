@@ -5,10 +5,12 @@ services:
     image: 'url-shortener:latest'
     build:
       context: .
+      dockerfile: Dockerfile
     container_name: url-shortener-app
     depends_on:
       - db
       - redis
+      - zookeeper
     ports:
       - "8080:8080"
       - "80:8080"
@@ -22,7 +24,7 @@ services:
       - SPRING_REDIS_PORT=6379
       - SPRING_REDIS_PASSWORD=redis
       - SPRING_REDIS_TIMEOUT=60000
-          
+      - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:9092
   db:
     image: 'postgres:13.4-alpine'
     container_name: postgresql-db
@@ -47,7 +49,116 @@ services:
     environment:
       - REDIS_REPLICATION_MODE=master
 
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "22181:2181"
+      - "2181:2181"
+    volumes:
+      - zookeeper_data:/data
+      - zookeeper_datalog:/datalog
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "29092:29092"
+      - "9092:9092"
+    environment:
+      ADV_HOST: kafka
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://kafka:9092, PLAINTEXT_HOST://localhost:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+
+  magic:
+    image: "digitsy/kafka-magic"
+    container_name: magic
+    ports:
+      - "8081:80"
+    volumes:
+      - magic_data:/config
+
+    environment:
+      KMAGIC_ALLOW_TOPIC_DELETE: "true"
+      KMAGIC_ALLOW_SCHEMA_DELETE: "true"
+      KMAGIC_CONFIG_STORE_TYPE: "file"
+      KMAGIC_CONFIG_STORE_CONNECTION: "Data Source=/config/KafkaMagicConfig.db;"
+
+  elasticsearch:
+    image: elasticsearch:7.14.1
+    container_name: elasticsearch
+    hostname: elasticsearch
+    environment:
+      - "discovery.type=single-node"
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - 9200:9200
+      - 9300:9300
+  kibana:
+    image: kibana:7.14.1
+    container_name: kibana
+    hostname: kibana
+    ports:
+      - 5601:5601
+    links:
+      - elasticsearch
+    depends_on:
+      - elasticsearch
+    environment:
+      - ELASTIC_SEARCH_HOST=http://elasticsearch:9200
+
+  logstash:
+    image: logstash:7.14.1
+    container_name: logstash
+    hostname: logstash
+    ports:
+      - 9600:9600
+      - 8089:8089
+    volumes:
+      - type: bind
+        source: ./config-dir/logstash.conf
+        target: /usr/share/logstash/pipeline/logstash.conf
+        read_only: true
+    links:
+      - elasticsearch
+      - kafka
+    depends_on:
+      - elasticsearch
+    environment:
+      - KAFKA_HOST=http://kafka:9092
+      - ELASTIC_SEARCH_HOST=http://elasticsearch:9200
+
 volumes:
   postgres-data:
   redis-data:
   redis-conf:
+  zookeeper_data:
+  zookeeper_datalog:
+  kafka_data:
+  magic_data:
+  logstash:
+
+networks:
+  urlnet:
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
